@@ -1,0 +1,404 @@
+// HRonE – PostgreSQL schema
+// Principles: explicit onDelete on every relation, indexes on every list/lookup path,
+// denormalised counters updated inside transactions, plain-text content only.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────── Enums ─────────────────────────
+
+enum Role {
+  EMPLOYEE
+  HR_SPECIALIST
+  LEGAL_CONSULTANT
+  ADMIN
+}
+
+enum VerificationStatus {
+  NONE
+  PENDING
+  VERIFIED
+  REJECTED
+  REVOKED
+}
+
+enum ContentStatus {
+  PUBLISHED
+  HIDDEN
+  REMOVED
+}
+
+enum SubscriptionStatus {
+  INCOMPLETE
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+}
+
+enum BillingInterval {
+  MONTH
+  YEAR
+}
+
+enum ReportTarget {
+  POST
+  COMMENT
+  THREAD
+  REPLY
+  USER
+}
+
+enum ReportStatus {
+  OPEN
+  ACTIONED
+  DISMISSED
+}
+
+// ───────────────────────── Identity ─────────────────────────
+
+model User {
+  id            String             @id @default(uuid()) @db.Uuid
+  username      String // display casing
+  usernameLower String             @unique // uniqueness is case-insensitive
+  email         String             @unique // stored lowercased
+  passwordHash  String
+  displayName   String
+  headline      String? // e.g. "HR Manager – Riyadh"
+  bio           String?
+  role          Role               @default(EMPLOYEE)
+  verification  VerificationStatus @default(NONE)
+  isActive      Boolean            @default(true)
+  emailVerifiedAt DateTime? // set when the user proves ownership of the address
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  refreshTokens  RefreshToken[]
+  authTokens     AuthToken[]
+  notifications  Notification[] @relation("NotifyRecipient")
+  notificationsCaused Notification[] @relation("NotifyActor")
+  blocking       Block[]        @relation("Blocker")
+  blockedBy      Block[]        @relation("Blocked")
+  expertRequests ExpertVerification[] @relation("RequestUser")
+  posts          Post[]
+  comments       Comment[]
+  likes          PostLike[]
+  threads        Thread[]
+  replies        Reply[]
+  votes          ReplyVote[]
+  sent           Message[]            @relation("Sender")
+  convsAsA       Conversation[]       @relation("ConvA")
+  convsAsB       Conversation[]       @relation("ConvB")
+  subscriptions  Subscription[]
+  following      Follow[]             @relation("Follower")
+  followers      Follow[]             @relation("Following")
+  reports        Report[]             @relation("Reporter")
+
+  @@index([role, verification])
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  familyId  String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+}
+
+enum AuthTokenType {
+  EMAIL_VERIFY
+  PASSWORD_RESET
+}
+
+/// One-time links sent by email. Only the SHA-256 hash is stored; the raw token exists solely in the email.
+model AuthToken {
+  id        String          @id @default(uuid()) @db.Uuid
+  userId    String          @db.Uuid
+  type      AuthTokenType
+  tokenHash String          @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime        @default(now())
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+}
+
+model ExpertVerification {
+  id            String             @id @default(uuid()) @db.Uuid
+  userId        String             @db.Uuid
+  requestedRole Role
+  status        VerificationStatus @default(PENDING)
+  notes         String?
+  documents     Json               @default("[]")
+  reviewerId    String?            @db.Uuid
+  reviewNote    String?
+  reviewedAt    DateTime?
+  expiresAt     DateTime?
+  createdAt     DateTime           @default(now())
+  user          User               @relation("RequestUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([status, createdAt])
+}
+
+model Follow {
+  followerId  String   @db.Uuid
+  followingId String   @db.Uuid
+  createdAt   DateTime @default(now())
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@index([followingId])
+}
+
+// ───────────────────────── Community ─────────────────────────
+
+model Tag {
+  id      String      @id @default(uuid()) @db.Uuid
+  slug    String      @unique // normalised (no #, no diacritics)
+  label   String // as first written
+  posts   PostTag[]
+  threads ThreadTag[]
+}
+
+model Post {
+  id           String        @id @default(uuid()) @db.Uuid
+  authorId     String        @db.Uuid
+  body         String // plain text only – never rendered as HTML
+  attachments  Json          @default("[]") // [{ key, mime, sizeBytes, name }] – object keys for presigned access
+  status       ContentStatus @default(PUBLISHED)
+  likeCount    Int           @default(0)
+  commentCount Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  author       User          @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  tags         PostTag[]
+  comments     Comment[]
+  likes        PostLike[]
+
+  @@index([status, createdAt(sort: Desc), id])
+  @@index([authorId, createdAt(sort: Desc)])
+}
+
+model PostTag {
+  postId String @db.Uuid
+  tagId  String @db.Uuid
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@index([tagId])
+}
+
+model PostLike {
+  postId    String   @db.Uuid
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@index([userId])
+}
+
+model Comment {
+  id        String        @id @default(uuid()) @db.Uuid
+  postId    String        @db.Uuid
+  authorId  String        @db.Uuid
+  body      String
+  status    ContentStatus @default(PUBLISHED)
+  createdAt DateTime      @default(now())
+  post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([postId, createdAt, id])
+}
+
+// ───────────────────────── Consultations (community Q&A) ─────────────────────────
+
+model Thread {
+  id              String        @id @default(uuid()) @db.Uuid
+  authorId        String        @db.Uuid
+  title           String
+  body            String
+  isPremium       Boolean       @default(false)
+  isAnonymous     Boolean       @default(false) // hide author publicly; identity kept for moderation
+  status          ContentStatus @default(PUBLISHED)
+  replyCount      Int           @default(0)
+  acceptedReplyId String?       @unique @db.Uuid
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  author          User          @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  replies         Reply[]
+  tags            ThreadTag[]
+
+  @@index([status, createdAt(sort: Desc), id])
+  @@index([status, replyCount])
+  @@index([authorId])
+}
+
+model ThreadTag {
+  threadId String @db.Uuid
+  tagId    String @db.Uuid
+  thread   Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([threadId, tagId])
+  @@index([tagId])
+}
+
+model Reply {
+  id        String        @id @default(uuid()) @db.Uuid
+  threadId  String        @db.Uuid
+  authorId  String        @db.Uuid
+  parentId  String?       @db.Uuid // one nesting level enforced in service
+  body      String
+  asExpert  Boolean       @default(false) // snapshot at write time
+  score     Int           @default(0)
+  status    ContentStatus @default(PUBLISHED)
+  createdAt DateTime      @default(now())
+  thread    Thread        @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  votes     ReplyVote[]
+
+  @@index([threadId, createdAt, id])
+}
+
+model ReplyVote {
+  replyId String @db.Uuid
+  userId  String @db.Uuid
+  value   Int // +1 or -1
+  reply   Reply  @relation(fields: [replyId], references: [id], onDelete: Cascade)
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([replyId, userId])
+  @@index([userId])
+}
+
+// ───────────────────────── Messaging ─────────────────────────
+
+model Conversation {
+  id            String    @id @default(uuid()) @db.Uuid
+  userAId       String    @db.Uuid // invariant (service): userAId < userBId
+  userBId       String    @db.Uuid
+  lastMessageAt DateTime  @default(now())
+  userALastRead DateTime?
+  userBLastRead DateTime?
+  userA         User      @relation("ConvA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB         User      @relation("ConvB", fields: [userBId], references: [id], onDelete: Cascade)
+  messages      Message[]
+
+  @@unique([userAId, userBId])
+  @@index([userAId, lastMessageAt(sort: Desc)])
+  @@index([userBId, lastMessageAt(sort: Desc)])
+}
+
+model Message {
+  id             String       @id @default(uuid()) @db.Uuid
+  conversationId String       @db.Uuid
+  senderId       String       @db.Uuid
+  clientMsgId    String // idempotency key from the client
+  body           String
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation("Sender", fields: [senderId], references: [id], onDelete: Restrict)
+
+  @@unique([senderId, clientMsgId])
+  @@index([conversationId, createdAt(sort: Desc), id])
+}
+
+// ───────────────────────── Billing (provider-agnostic) ─────────────────────────
+
+model Subscription {
+  id               String             @id @default(uuid()) @db.Uuid
+  userId           String             @db.Uuid
+  provider         String // e.g. "manual", "moyasar", "tap" – decided after provider confirmation
+  providerRef      String             @unique
+  interval         BillingInterval
+  status           SubscriptionStatus
+  currentPeriodEnd DateTime
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  user             User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, status])
+}
+
+model WebhookEvent {
+  providerEventId String    @id
+  provider        String
+  receivedAt      DateTime  @default(now())
+  processedAt     DateTime?
+}
+
+// ───────────────────────── Moderation ─────────────────────────
+
+model Report {
+  id         String       @id @default(uuid()) @db.Uuid
+  reporterId String       @db.Uuid
+  targetType ReportTarget
+  targetId   String       @db.Uuid
+  reason     String
+  status     ReportStatus @default(OPEN)
+  createdAt  DateTime     @default(now())
+  resolvedAt DateTime?
+  reporter   User         @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@unique([reporterId, targetType, targetId])
+  @@index([status, createdAt])
+}
+
+// ───────────────────────── Notifications & blocking ─────────────────────────
+
+enum NotificationType {
+  POST_LIKE
+  POST_COMMENT
+  THREAD_REPLY
+  REPLY_REPLY
+  ANSWER_ACCEPTED
+  NEW_FOLLOWER
+  VERIFICATION_APPROVED
+  VERIFICATION_REJECTED
+}
+
+model Notification {
+  id         String           @id @default(uuid()) @db.Uuid
+  userId     String           @db.Uuid // recipient
+  actorId    String?          @db.Uuid // who caused it (null for system events)
+  type       NotificationType
+  targetType String? // POST | THREAD | USER
+  targetId   String?          @db.Uuid
+  preview    String? // short text snippet
+  readAt     DateTime?
+  createdAt  DateTime         @default(now())
+  user       User             @relation("NotifyRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  actor      User?            @relation("NotifyActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc), id])
+  @@index([userId, readAt])
+}
+
+model Block {
+  blockerId String   @db.Uuid
+  blockedId String   @db.Uuid
+  createdAt DateTime @default(now())
+  blocker   User     @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked   User     @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@id([blockerId, blockedId])
+  @@index([blockedId])
+}

@@ -1,0 +1,12 @@
+# Optional: a normal PostgreSQL instead of the embedded dev DB (`npm run dev:db`).
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: hrone
+      POSTGRES_PASSWORD: hrone
+      POSTGRES_DB: HRoeN
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+volumes:
+  pgdata:
