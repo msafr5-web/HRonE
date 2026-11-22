@@ -20,9 +20,13 @@ const NAV = [
 
 function Logo() {
   return (
-    <Link href="/" className="flex flex-col" aria-label="HR1 – الصفحة الرئيسية">
-      <span className="hr1-wordmark" dir="ltr" aria-hidden><span className="hr1-hr">HR</span><span className="hr1-one">1</span></span>
-      <span className="hr1-tag hidden sm:block" aria-hidden>مجتمع الموارد البشرية</span>
+    <Link href="/" className="flex items-center gap-2.5" aria-label="HR1 – الصفحة الرئيسية">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/brand/hr1-mark.svg" alt="" width={38} height={38} className="h-[38px] w-[38px] shrink-0 rounded-[11px] shadow-card" />
+      <span className="flex flex-col" aria-hidden>
+        <span className="hr1-text" dir="ltr">HR<span>1</span></span>
+        <span className="hr1-tag hidden sm:block">مجتمع الموارد البشرية</span>
+      </span>
     </Link>
   );
 }
