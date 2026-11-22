@@ -1,0 +1,27 @@
+// Modular Bootstrap 5.3 build, scoped on purpose:
+//  - only the components HR1 uses (popover, tooltip, toast, progress, badge, transitions)
+//  - NO reboot / grid / buttons / cards, so it cannot collide with Tailwind's .card .btn .input .container
+//  - wrapped in a native CSS cascade layer: every unlayered rule (Tailwind + our theme) always wins.
+// RTL needs no RTLCSS here: these components are direction-agnostic (logical alignment, Popper placement).
+@layer bootstrap {
+  @import "bootstrap/scss/functions";
+
+  $font-family-sans-serif: var(--font-plex), "IBM Plex Sans Arabic", "Cairo", Tahoma, system-ui, sans-serif;
+  $primary: #0f766e;
+  $secondary: #475569;
+  $success: #059669;
+  $warning: #d97706;
+  $danger: #dc2626;
+
+  @import "bootstrap/scss/variables";
+  @import "bootstrap/scss/variables-dark";
+  @import "bootstrap/scss/maps";
+  @import "bootstrap/scss/mixins";
+  @import "bootstrap/scss/root";
+  @import "bootstrap/scss/transitions";
+  @import "bootstrap/scss/tooltip";
+  @import "bootstrap/scss/popover";
+  @import "bootstrap/scss/toasts";
+  @import "bootstrap/scss/progress";
+  @import "bootstrap/scss/badge";
+}

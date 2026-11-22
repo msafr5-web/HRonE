@@ -1,7 +1,7 @@
 'use client';
 
 import clsx from 'clsx';
-import { BadgeCheck, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
 import { initials, isExpert, ROLE_LABEL } from '@/lib/format';
@@ -26,8 +26,8 @@ export function ExpertBadge({ author, full }: { author: Pick<Author, 'role' | 'v
   if (author.role === 'ADMIN') return <span className="rounded-full bg-gold-500/15 px-2 py-0.5 text-[11px] font-semibold text-gold-600">الإدارة</span>;
   if (!isExpert(author)) return null;
   return (
-    <span title="خبير موثّق" className="inline-flex items-center gap-1 rounded-full bg-gold-500/15 px-2 py-0.5 text-[11px] font-semibold text-gold-600">
-      <BadgeCheck size={13} aria-hidden /> {full ? ROLE_LABEL[author.role] : 'خبير موثّق'}
+    <span title="خبير موثّق" className="badge-expert">
+      <i className="bi bi-shield-fill-check" aria-hidden /> {full ? ROLE_LABEL[author.role] : 'خبير موثّق'}
     </span>
   );
 }
@@ -48,7 +48,7 @@ export function Spinner({ className }: { className?: string }) {
 }
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={clsx('animate-pulse rounded-xl bg-line/70', className)} />;
+  return <div className={clsx('skeleton-shimmer rounded-xl', className)} />;
 }
 
 export function CardSkeleton() {
@@ -62,7 +62,7 @@ export function CardSkeleton() {
 
 export function EmptyState({ icon, title, hint, action }: { icon: ReactNode; title: string; hint?: string; action?: ReactNode }) {
   return (
-    <div className="card flex flex-col items-center gap-2 px-6 py-12 text-center">
+    <div className="card empty-dashed flex flex-col items-center gap-2 px-6 py-12 text-center">
       <div className="mb-1 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">{icon}</div>
       <h3 className="text-base font-bold">{title}</h3>
       {hint && <p className="max-w-sm text-sm text-mute">{hint}</p>}
@@ -86,10 +86,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastCtx.Provider value={push}>
       {children}
-      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex flex-col items-center gap-2 px-4 lg:bottom-6">
+      <div aria-live="polite" className="hr-toast-host toast-container">
         {items.map((t) => (
-          <div key={t.id} className={clsx('pointer-events-auto animate-rise rounded-xl px-4 py-2.5 text-sm font-medium shadow-lg', t.kind === 'ok' ? 'bg-brand-900 text-bg' : 'bg-red-600 text-white')}>
-            {t.msg}
+          <div key={t.id} role={t.kind === 'err' ? 'alert' : 'status'} className={clsx('toast show hr-toast', t.kind === 'err' && 'is-err')}>
+            <div className="toast-body"><i className={clsx('bi', t.kind === 'ok' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill')} aria-hidden /><span>{t.msg}</span></div>
           </div>
         ))}
       </div>

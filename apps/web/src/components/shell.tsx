@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useAutoHideHeader } from '@/lib/use-auto-hide-header';
 import type { Conversation } from '@/lib/types';
 import { NotificationBell } from './notification-bell';
 import { Avatar } from './ui';
@@ -19,9 +20,9 @@ const NAV = [
 
 function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-2.5" aria-label="HRonE – الصفحة الرئيسية">
-      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-900 text-sm font-black text-white shadow-card">HR</span>
-      <span className="text-lg font-extrabold tracking-tight text-brand-900">HRon<span className="text-gold-500">E</span></span>
+    <Link href="/" className="flex flex-col" aria-label="HR1 – الصفحة الرئيسية">
+      <span className="hr1-wordmark" dir="ltr" aria-hidden><span className="hr1-hr">HR</span><span className="hr1-one">1</span></span>
+      <span className="hr1-tag hidden sm:block" aria-hidden>مجتمع الموارد البشرية</span>
     </Link>
   );
 }
@@ -51,6 +52,7 @@ function ThemeToggle() {
         const next = !dark;
         setDark(next);
         document.documentElement.classList.toggle('dark', next);
+        if (next) document.documentElement.setAttribute('data-bs-theme', 'dark'); else document.documentElement.removeAttribute('data-bs-theme');
         try { localStorage.setItem('theme', next ? 'dark' : 'light'); } catch {}
       }}
     >
@@ -111,8 +113,10 @@ export function Header() {
   const { user, ready } = useAuth();
   const path = usePathname();
   const unread = useUnread();
+  const headerRef = useRef<HTMLElement>(null);
+  useAutoHideHeader(headerRef);
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-bg/80 backdrop-blur-xl">
+    <header ref={headerRef} className="site-header glass-nav sticky top-0 z-30 border-b">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4">
         <Logo />
         <nav className="hidden items-center gap-1 md:flex" aria-label="التنقل الرئيسي">
@@ -154,7 +158,7 @@ export function BottomNav() {
   const unread = useUnread();
   const items = [...NAV, { href: user ? `/u/${user.username}` : '/login', label: user ? 'حسابي' : 'دخول', icon: UserRound }];
   return (
-    <nav aria-label="التنقل السفلي" className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
+    <nav aria-label="التنقل السفلي" className="glass-nav fixed inset-x-0 bottom-0 z-30 border-t pb-[env(safe-area-inset-bottom)] md:hidden">
       <ul className="mx-auto grid max-w-md grid-cols-4">
         {items.map(({ href, label, icon: I }) => {
           const active = path.startsWith(href) && href !== '/login';
@@ -177,7 +181,7 @@ export function Footer() {
   return (
     <footer className="mt-16 border-t border-line pb-24 pt-8 text-sm text-mute md:pb-10">
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 sm:flex-row sm:items-center sm:justify-between">
-        <p>© {new Date().getFullYear()} HRonE — مجتمع مهني للموارد البشرية في المملكة.</p>
+        <p>© {new Date().getFullYear()} HR1 — مجتمع مهني للموارد البشرية في المملكة.</p>
         <nav className="flex flex-wrap gap-4" aria-label="روابط قانونية">
           <Link href="/legal/rules" className="hover:text-ink">قواعد المجتمع</Link>
           <Link href="/legal/terms" className="hover:text-ink">الشروط</Link>

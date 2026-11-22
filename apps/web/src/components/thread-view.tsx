@@ -1,6 +1,8 @@
 'use client';
 
 import clsx from 'clsx';
+import { CATEGORY_LABEL, categoryOf } from '@/lib/categories';
+import { RichText } from './rich-text';
 import { CheckCircle2, ChevronDown, ChevronUp, CornerDownLeft, Lock, UserX } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -73,8 +75,9 @@ export function ThreadView({ initial }: { initial: Thread }) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <article className="card p-6">
+      <article className={`card cat-border cat-${categoryOf(thread.tags)} p-6`}>
         <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="cat-label">{CATEGORY_LABEL[categoryOf(thread.tags)]}</span>
           {thread.solved && <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2 py-0.5 font-semibold text-brand-700"><CheckCircle2 size={13} /> تمت الإجابة</span>}
           {thread.isPremium && <span className="inline-flex items-center gap-1 rounded-full bg-ink/10 px-2 py-0.5 font-semibold"><Lock size={12} /> مميّز</span>}
         </div>
@@ -85,7 +88,7 @@ export function ThreadView({ initial }: { initial: Thread }) {
           <span>·</span><time dateTime={thread.createdAt}>{timeAgo(thread.createdAt)}</time>
           <span className="ms-auto"><ReportButton type="THREAD" id={thread.id} /></span>
         </div>
-        <p className="mt-5 whitespace-pre-wrap break-words text-[15px] leading-8">{thread.body}</p>
+        <p className="mt-5 whitespace-pre-wrap break-words text-[15px] leading-8"><RichText text={thread.body} /></p>
         {thread.tags.length > 0 && <div className="mt-4"><TagChips tags={thread.tags} /></div>}
       </article>
 
@@ -109,7 +112,7 @@ export function ThreadView({ initial }: { initial: Thread }) {
                   {(kids.get(r.id) ?? []).map((k) => <ReplyItem key={k.id} r={k} nested onVote={vote} loggedIn={!!user} />)}
                 </ReplyItem>
               ))}
-              {tops.length === 0 && <li className="card p-8 text-center text-sm text-mute">لا توجد إجابات بعد — كن أول من يساعد.</li>}
+              {tops.length === 0 && <li className="card empty-dashed p-8 text-center text-sm text-mute">لا توجد إجابات بعد — كن أول من يساعد.</li>}
             </ul>
           )}
 
@@ -149,7 +152,7 @@ function ReplyItem({ r, nested, canAccept, onVote, onAccept, onReply, busy, logg
             {r.asExpert && <ExpertBadge author={{ role: r.author.role === 'EMPLOYEE' ? 'HR_SPECIALIST' : r.author.role, verification: 'VERIFIED' }} full />}
             <span className="text-xs text-mute">{timeAgo(r.createdAt)}</span>
           </div>
-          <p className="mt-2 whitespace-pre-wrap break-words text-[15px] leading-8">{r.body}</p>
+          <p className="mt-2 whitespace-pre-wrap break-words text-[15px] leading-8"><RichText text={r.body} /></p>
           <div className="mt-3 flex flex-wrap items-center gap-1 text-xs">
             {!nested && loggedIn && <button className="btn-ghost !px-2 !py-1" onClick={() => setOpen((o) => !o)}><CornerDownLeft size={14} /> رد</button>}
             {canAccept && !nested && <button className="btn-ghost !px-2 !py-1 !text-brand-600" onClick={() => onAccept?.(r)}><CheckCircle2 size={14} /> {r.accepted ? 'إلغاء الاعتماد' : 'اعتماد كإجابة'}</button>}

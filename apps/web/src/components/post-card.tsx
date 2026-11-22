@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/auth';
 import { compact, timeAgo } from '@/lib/format';
 import type { Post } from '@/lib/types';
 import { ReportButton } from './report-button';
+import { RichText } from './rich-text';
 import { Avatar, ExpertBadge, TagChips, useToast } from './ui';
 
 export function PostCard({ post, full, onRemoved }: { post: Post; full?: boolean; onRemoved?: (id: string) => void }) {
@@ -56,7 +57,7 @@ export function PostCard({ post, full, onRemoved }: { post: Post; full?: boolean
 
   const canDelete = user && (user.id === a.id || user.role === 'ADMIN');
   return (
-    <article className="card animate-rise p-5">
+    <article className="card card-lift animate-rise p-5">
       <header className="flex items-start gap-3">
         <Link href={`/u/${a.username}`}><Avatar name={a.displayName} seed={a.username} /></Link>
         <div className="min-w-0 flex-1">
@@ -71,7 +72,7 @@ export function PostCard({ post, full, onRemoved }: { post: Post; full?: boolean
 
       <div className="mt-3">
         {full ? (
-          <p className="whitespace-pre-wrap break-words text-[15px] leading-8">{post.body}</p>
+          <p className="whitespace-pre-wrap break-words text-[15px] leading-8"><RichText text={post.body} /></p>
         ) : (
           <Link href={`/community/${post.id}`} className="block">
             <p className="line-clamp-6 whitespace-pre-wrap break-words text-[15px] leading-8">{post.body}</p>

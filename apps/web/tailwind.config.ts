@@ -16,7 +16,7 @@ export default {
           700: 'rgb(var(--brand-700) / <alpha-value>)',
           900: 'rgb(var(--brand-900) / <alpha-value>)',
         },
-        gold: { 400: '#d4b25c', 500: '#c8a24a', 600: '#a8832e' },
+        gold: { 400: '#f59e0b', 500: '#d97706', 600: '#b45309' },
         bg: 'rgb(var(--bg) / <alpha-value>)',
         surface: 'rgb(var(--surface) / <alpha-value>)',
         line: 'rgb(var(--line) / <alpha-value>)',

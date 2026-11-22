@@ -1,13 +1,17 @@
 import { CheckCircle2, Lock, MessageCircle, UserX } from 'lucide-react';
 import Link from 'next/link';
+import { CATEGORY_LABEL, categoryOf } from '@/lib/categories';
 import { timeAgo } from '@/lib/format';
 import type { Thread } from '@/lib/types';
+import { CopyLinkButton } from './copy-link-button';
 import { Avatar, ExpertBadge, TagChips } from './ui';
 
 export function ThreadCard({ t }: { t: Thread }) {
+  const cat = categoryOf(t.tags);
   return (
-    <article className="card animate-rise p-5 transition hover:-translate-y-0.5 hover:border-brand-500/40">
+    <article className={`card card-lift cat-border cat-${cat} animate-rise p-5`}>
       <div className="flex flex-wrap items-center gap-2 text-xs">
+        <span className="cat-label">{CATEGORY_LABEL[cat]}</span>
         {t.solved && <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2 py-0.5 font-semibold text-brand-700"><CheckCircle2 size={13} /> تمت الإجابة</span>}
         {!t.solved && t.replyCount === 0 && <span className="rounded-full bg-gold-500/15 px-2 py-0.5 font-semibold text-gold-600">بانتظار إجابة</span>}
         {t.isPremium && <span className="inline-flex items-center gap-1 rounded-full bg-ink/10 px-2 py-0.5 font-semibold"><Lock size={12} /> مميّز</span>}
@@ -25,6 +29,7 @@ export function ThreadCard({ t }: { t: Thread }) {
         )}
         <span>·</span><time dateTime={t.createdAt}>{timeAgo(t.createdAt)}</time>
         <span className="ms-auto inline-flex items-center gap-1"><MessageCircle size={14} /> {t.replyCount} {t.replyCount === 1 ? 'رد' : 'ردود'}</span>
+        <CopyLinkButton path={`/consultations/${t.id}`} />
       </footer>
     </article>
   );

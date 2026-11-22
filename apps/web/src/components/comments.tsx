@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { RichText } from './rich-text';
 import { Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -50,14 +51,14 @@ export function Comments({ postId }: { postId: string }) {
       ) : (
         <p className="card mb-4 p-4 text-sm text-mute"><Link className="font-semibold text-brand-600 underline" href="/login">سجّل الدخول</Link> لإضافة تعليق.</p>
       )}
-      {!loaded ? <Spinner className="mx-auto" /> : items.length === 0 ? <p className="py-6 text-center text-sm text-mute">لا توجد تعليقات بعد.</p> : (
+      {!loaded ? <Spinner className="mx-auto" /> : items.length === 0 ? <p className="card empty-dashed py-6 text-center text-sm text-mute">لا توجد تعليقات بعد.</p> : (
         <ul className="space-y-3">
           {items.map((c) => (
             <li key={c.id} className="card flex animate-rise gap-3 p-4">
               <Link href={`/u/${c.author.username}`}><Avatar name={c.author.displayName} seed={c.author.username} size={34} /></Link>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2 text-sm"><Link href={`/u/${c.author.username}`} className="font-bold">{c.author.displayName}</Link><ExpertBadge author={c.author} /><span className="text-xs text-mute">{timeAgo(c.createdAt)}</span></div>
-                <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-7">{c.body}</p>
+                <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-7"><RichText text={c.body} /></p>
               </div>
               <div className="flex items-start">
                 {user && (user.id === c.author.id || user.role === 'ADMIN') && <button className="btn-ghost !p-1.5" aria-label="حذف التعليق" onClick={() => del(c.id)}><Trash2 size={14} /></button>}

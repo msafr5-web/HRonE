@@ -3,32 +3,32 @@
 @tailwind utilities;
 
 :root {
-  --bg: 247 245 239;
+  --bg: 248 250 252;
   --surface: 255 255 255;
-  --line: 228 224 212;
-  --ink: 20 32 27;
-  --mute: 98 112 105;
-  --shadow: 11 61 46;
-  --brand-50: 236 246 241;
-  --brand-100: 211 234 224;
-  --brand-500: 34 140 100;
-  --brand-600: 22 112 80;
-  --brand-700: 14 88 63;
-  --brand-900: 11 61 46;
+  --line: 226 232 240;
+  --ink: 15 23 42;
+  --mute: 71 85 105;
+  --shadow: 15 23 42;
+  --brand-50: 240 253 250;
+  --brand-100: 204 251 241;
+  --brand-500: 13 148 136;
+  --brand-600: 15 118 110;
+  --brand-700: 17 94 89;
+  --brand-900: 15 23 42;
 }
 .dark {
-  --bg: 11 18 15;
-  --surface: 19 30 25;
-  --line: 38 54 46;
-  --ink: 234 241 237;
-  --mute: 150 168 159;
+  --bg: 11 17 32;
+  --surface: 17 24 39;
+  --line: 30 41 59;
+  --ink: 241 245 249;
+  --mute: 148 163 184;
   --shadow: 0 0 0;
-  --brand-50: 20 40 32;
-  --brand-100: 26 56 44;
-  --brand-500: 62 186 138;
-  --brand-600: 76 200 152;
-  --brand-700: 120 220 180;
-  --brand-900: 200 240 222;
+  --brand-50: 15 38 46;
+  --brand-100: 19 55 60;
+  --brand-500: 45 212 191;
+  --brand-600: 94 234 212;
+  --brand-700: 153 246 228;
+  --brand-900: 226 232 240;
 }
 
 html { color-scheme: light; scroll-behavior: smooth; }
@@ -45,7 +45,7 @@ body { @apply bg-bg text-ink font-sans antialiased; background-image: radial-gra
   .btn-ghost { @apply btn text-mute hover:bg-brand-50 hover:text-ink; }
   .btn-outline { @apply btn border border-line text-ink hover:bg-brand-50; }
   .input { @apply w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm placeholder:text-mute/70 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20; }
-  .brand-panel { color: #fff; background: linear-gradient(135deg, #0b3d2e 0%, #0e583f 55%, #167050 100%); }
+  .brand-panel { color: #fff; }
   .chip { @apply inline-flex items-center rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700 transition hover:bg-brand-100; }
 }
 

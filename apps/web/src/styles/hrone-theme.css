@@ -1,0 +1,125 @@
+/* HR1 institutional theme. Unlayered => always beats the `bootstrap` layer. */
+
+/* ── Bootstrap variables bridged to the site's design tokens (light + dark in one place) ── */
+:root, [data-bs-theme] {
+  --bs-body-font-family: var(--font-plex), 'IBM Plex Sans Arabic', 'Cairo', Tahoma, system-ui, sans-serif;
+  --bs-body-bg: rgb(var(--surface));
+  --bs-body-color: rgb(var(--ink));
+  --bs-emphasis-color: rgb(var(--ink));
+  --bs-secondary-color: rgb(var(--mute));
+  --bs-border-color: rgb(var(--line));
+  --bs-border-color-translucent: rgb(var(--line) / .7);
+  --bs-primary: rgb(var(--brand-600));
+  --bs-primary-rgb: var(--brand-600);
+  --bs-tertiary-bg: rgb(var(--brand-50));
+  --hr-navy: #0f172a;
+  --hr-navy-2: #1e293b;
+  --hr-teal: #0d9488;
+  --hr-emerald: #059669;
+  --hr-gold: #d97706;
+}
+
+/* ── Glassmorphic navigation (header + mobile bottom nav) ── */
+.glass-nav {
+  background: rgba(255, 255, 255, .85);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-color: rgba(15, 23, 42, .08);
+}
+.dark .glass-nav { background: rgba(11, 17, 32, .82); border-color: rgba(226, 232, 240, .1); }
+.site-header { transition: transform .28s cubic-bezier(.16, 1, .3, 1); will-change: transform; }
+.site-header[data-hidden='true'] { transform: translateY(-100%); }
+
+/* ── Hero: geometric grid + elevation ── */
+.brand-panel {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #134e4a 120%);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .12), 0 18px 40px -12px rgba(15, 23, 42, .45);
+}
+.hero-grid {
+  position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, .06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .06) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(ellipse at 20% 30%, #000 0%, transparent 72%);
+  mask-image: radial-gradient(ellipse at 20% 30%, #000 0%, transparent 72%);
+}
+.hero-stat {
+  display: inline-flex; align-items: center; gap: .45rem;
+  padding: .4rem .85rem; border-radius: 999px; font-size: .8rem; font-weight: 600; color: #fff;
+  background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .18);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  transition: transform .2s cubic-bezier(.16, 1, .3, 1), background .2s;
+}
+.hero-stat:hover { transform: translateY(-2px); background: rgba(255, 255, 255, .18); }
+.hero-stat i { color: #fbbf24; }
+
+/* ── Cards: lift + semantic start-edge by category (logical property => right edge in RTL) ── */
+.card-lift { transition: all .2s cubic-bezier(.16, 1, .3, 1); }
+.card-lift:hover { transform: translateY(-3px); box-shadow: 0 10px 28px -10px rgb(var(--shadow) / .22); }
+.cat-border { border-inline-start: 4px solid var(--cat, #94a3b8); }
+.cat-labor   { --cat: #1e3a8a; }
+.cat-gosi    { --cat: #0284c7; }
+.cat-nitaqat { --cat: #059669; }
+.cat-general { --cat: #94a3b8; }
+.dark .cat-labor { --cat: #60a5fa; }
+.cat-label {
+  display: inline-flex; align-items: center; gap: .3rem; border-radius: 999px; padding: .1rem .55rem;
+  font-size: .7rem; font-weight: 700; color: var(--cat); background: color-mix(in srgb, var(--cat) 12%, transparent);
+}
+
+/* ── Verified expert badge ── */
+.badge-expert {
+  display: inline-flex; align-items: center; gap: .3rem; padding: .12rem .55rem; border-radius: 999px;
+  font-size: 11px; font-weight: 700; color: #fff; line-height: 1.5;
+  background: linear-gradient(135deg, #047857 0%, #0d9488 55%, #b45309 130%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), 0 1px 3px rgba(4, 120, 87, .35);
+}
+.badge-expert i { font-size: .8rem; color: #fde68a; }
+
+/* ── Empty states + skeleton shimmer ── */
+.empty-dashed { border: 2px dashed rgb(var(--line)); background: rgb(var(--surface) / .6); box-shadow: none; }
+.empty-dashed:hover { border-color: rgb(var(--brand-500) / .5); }
+.skeleton-shimmer {
+  background: linear-gradient(100deg, rgb(var(--line) / .55) 30%, rgb(var(--line) / .15) 50%, rgb(var(--line) / .55) 70%);
+  background-size: 220% 100%; animation: hr-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes hr-shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+
+/* ── Toast (Bootstrap .toast) pinned bottom-left; physical "left" on purpose (the spec asks for left in RTL) ── */
+.hr-toast-host {
+  position: fixed; z-index: 1090; left: 1rem; bottom: 5rem; display: flex; flex-direction: column; gap: .5rem;
+  pointer-events: none; max-width: calc(100vw - 2rem);
+}
+@media (min-width: 1024px) { .hr-toast-host { bottom: 1.5rem; } }
+.hr-toast { pointer-events: auto; border: 0; color: #fff; background: #0f172a; box-shadow: 0 8px 24px rgba(15, 23, 42, .35); animation: rise .35s ease-out both; }
+.hr-toast.is-err { background: #b91c1c; }
+.dark .hr-toast:not(.is-err) { background: #0f766e; }
+.hr-toast .toast-body { display: flex; align-items: center; gap: .6rem; font-size: .875rem; font-weight: 500; }
+
+/* ── Character counter (Bootstrap .progress) ── */
+.hr-counter .progress { height: 4px; background: rgb(var(--line)); }
+.hr-counter .progress-bar { background: var(--hr-teal); transition: width .2s ease, background-color .2s; }
+.hr-counter[data-level='warn'] .progress-bar { background: var(--hr-gold); }
+.hr-counter[data-level='max'] .progress-bar { background: #dc2626; }
+
+/* ── Labor-law article reference (popover trigger) ── */
+.labor-ref {
+  cursor: help; font-weight: 600; color: rgb(var(--brand-700));
+  border-bottom: 1.5px dotted currentColor; border-radius: 2px;
+}
+.labor-ref:hover, .labor-ref:focus-visible { background: rgb(var(--brand-50)); }
+.popover { --bs-popover-max-width: 300px; --bs-popover-body-padding-x: .9rem; --bs-popover-body-padding-y: .7rem; font-family: var(--bs-body-font-family); z-index: 1080; }
+.popover-header { font-weight: 700; }
+.popover-body { font-size: .8rem; line-height: 1.85; }
+
+/* ── Brand wordmark ── */
+.hr1-wordmark { display: inline-flex; align-items: center; gap: .3rem; direction: ltr; line-height: 1; }
+.hr1-wordmark .hr1-hr { font-weight: 900; font-size: 1.35rem; letter-spacing: -.04em; color: rgb(var(--brand-900)); }
+.hr1-wordmark .hr1-one {
+  display: inline-flex; align-items: center; justify-content: center; width: 1.55rem; height: 1.55rem; border-radius: .45rem;
+  font-weight: 900; font-size: 1.1rem; color: #fff;
+  background: linear-gradient(145deg, #f59e0b 0%, #d97706 60%, #b45309 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 2px 6px rgba(180, 83, 9, .35);
+}
+.hr1-tag { display: block; margin-top: .2rem; font-size: .62rem; font-weight: 600; letter-spacing: .02em; color: rgb(var(--mute)); }

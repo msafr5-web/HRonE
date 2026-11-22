@@ -3,10 +3,12 @@
 import clsx from 'clsx';
 import { Hash, X } from 'lucide-react';
 import Link from 'next/link';
-import { useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Post, Tag } from '@/lib/types';
+import { useDraft } from '@/lib/use-draft';
+import { CharCounter } from './char-counter';
 import { Avatar, Spinner, useToast } from './ui';
 
 const MAX = 3000;
@@ -14,12 +16,13 @@ const MAX = 3000;
 export function Composer({ suggestions, onCreated }: { suggestions: Tag[]; onCreated: (p: Post) => void }) {
   const { user, ready } = useAuth();
   const toast = useToast();
-  const [body, setBody] = useState('');
+  const { value: body, setValue: setBody, clear: clearBody, restored } = useDraft('post', '');
   const [tags, setTags] = useState<string[]>([]);
   const [draft, setDraft] = useState('');
   const [focus, setFocus] = useState(false);
   const [busy, setBusy] = useState(false);
   const ta = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => { if (restored) toast('تم استرجاع مسودتك'); }, [restored]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!ready) return <div className="card h-28 animate-pulse" />;
   if (!user) {
@@ -46,7 +49,7 @@ export function Composer({ suggestions, onCreated }: { suggestions: Tag[]; onCre
     try {
       const post = await api<Post>('/community/posts', { method: 'POST', body: { body, tags } });
       onCreated({ ...post, viewerLiked: false });
-      setBody(''); setTags([]); setFocus(false);
+      clearBody(); setTags([]); setFocus(false);
       toast('تم نشر منشورك');
     } catch (e) {
       toast((e as Error).message, 'err');
@@ -89,9 +92,9 @@ export function Composer({ suggestions, onCreated }: { suggestions: Tag[]; onCre
                 </div>
               )}
               <div className="flex items-center justify-between border-t border-line pt-3">
-                <span className={clsx('text-xs', body.length > MAX - 200 ? 'text-red-500' : 'text-mute')}>{body.length}/{MAX}</span>
+                <div className="w-44"><CharCounter length={body.length} max={MAX} /></div>
                 <div className="flex gap-2">
-                  <button className="btn-ghost" onClick={() => { setFocus(false); setBody(''); setTags([]); }}>إلغاء</button>
+                  <button className="btn-ghost" onClick={() => { setFocus(false); clearBody(); setTags([]); }}>إلغاء</button>
                   <button className="btn-primary" disabled={busy || body.trim().length === 0} onClick={submit}>{busy ? <Spinner /> : 'نشر'}</button>
                 </div>
               </div>

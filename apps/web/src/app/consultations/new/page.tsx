@@ -3,22 +3,26 @@
 import { EyeOff, Hash, Lock, ShieldAlert, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { CharCounter } from '@/components/char-counter';
 import { Disclaimer, Spinner, useToast } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { isExpert } from '@/lib/format';
 import type { Thread } from '@/lib/types';
+import { useDraft } from '@/lib/use-draft';
 
 export default function NewThreadPage() {
   const { user, ready } = useAuth();
   const router = useRouter();
   const toast = useToast();
-  const [f, setF] = useState({ title: '', body: '', isAnonymous: false, isPremium: false });
+  // Anonymous drafts are never persisted (privacy); everything else is auto-saved locally.
+  const { value: f, setValue: setF, clear: clearDraft, restored } = useDraft('thread', { title: '', body: '', isAnonymous: false, isPremium: false }, { enabled: (v) => !v.isAnonymous });
   const [tags, setTags] = useState<string[]>([]);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
+  useEffect(() => { if (restored) toast('تم استرجاع مسودتك'); }, [restored]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (ready && !user) router.replace('/login?next=/consultations/new'); }, [ready, user, router]);
   if (!user) return <div className="mx-auto max-w-2xl"><Spinner className="mx-auto mt-20" /></div>;
 
@@ -30,6 +34,7 @@ export default function NewThreadPage() {
     setBusy(true); setErr('');
     try {
       const t = await api<Thread>('/consultations', { method: 'POST', body: { ...f, tags } });
+      clearDraft();
       toast('تم نشر سؤالك');
       router.push(`/consultations/${t.id}`);
     } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
@@ -49,7 +54,8 @@ export default function NewThreadPage() {
           <span className="text-xs text-mute">8 أحرف على الأقل</span></label>
         <label className="block space-y-1.5"><span className="text-sm font-semibold">التفاصيل</span>
           <textarea className="input min-h-[160px] leading-7" maxLength={5000} value={f.body} onChange={(e) => setF({ ...f, body: e.target.value })} placeholder="اشرح الموقف، المدة، وما حاولت فعله حتى الآن…" />
-          <span className="text-xs text-mute">{f.body.length}/5000 — 20 حرفاً على الأقل</span></label>
+          </label>
+        <div className="-mt-3"><CharCounter length={f.body.length} max={5000} min={20} /></div>
         <div className="space-y-2"><span className="text-sm font-semibold">الوسوم</span>
           <div className="flex flex-wrap items-center gap-1.5">
             {tags.map((t) => <span key={t} className="chip gap-1">#{t}<button aria-label={`إزالة ${t}`} onClick={() => setTags(tags.filter((x) => x !== t))}><X size={12} /></button></span>)}
